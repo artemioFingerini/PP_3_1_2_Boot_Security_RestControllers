@@ -17,14 +17,14 @@ import java.util.Optional;
 
 
 @Service
-public class UserServiceImpl implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository usersRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
 
-    public UserServiceImpl(UserRepository usersRepository, RoleRepository roleRepository, @Lazy PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository usersRepository, RoleRepository roleRepository, @Lazy PasswordEncoder passwordEncoder) {
         this.usersRepository = usersRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;

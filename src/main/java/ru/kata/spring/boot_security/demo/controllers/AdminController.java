@@ -1,12 +1,13 @@
 package ru.kata.spring.boot_security.demo.controllers;
 
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.entities.User;
-import ru.kata.spring.boot_security.demo.services.UserServiceImpl;
+import ru.kata.spring.boot_security.demo.services.UserService;
+import ru.kata.spring.boot_security.demo.util.UserValidator;
 
 
 import javax.validation.Valid;
@@ -15,10 +16,13 @@ import java.util.List;
 @Controller
 public class AdminController {
 
-    private UserServiceImpl userService;
+    private UserService userService;
+    private UserValidator userValidator;
 
-    public AdminController(UserServiceImpl userService) {
+    @Autowired
+    public AdminController(UserService userService, UserValidator userValidator) {
         this.userService = userService;
+        this.userValidator = userValidator;
 
     }
 
@@ -36,27 +40,20 @@ public class AdminController {
     }
 
     @PostMapping("/admin/add")
-    public String addUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult,
+    public String addUser( @ModelAttribute("user") @Valid User user, BindingResult bindingResult,
                           @RequestParam(required = false) List<Long> roles,
                           Model model) {
+        userValidator.validate(user,bindingResult);
         if (bindingResult.hasErrors()) {
             model.addAttribute("allRoles", userService.findAll());
             model.addAttribute("admin", userService.getAllUsers());
             return "admin";
         }
-        try {
-            userService.saveUser(user,roles);
-            return "redirect:/admin";
-        } catch (DataIntegrityViolationException e) {
-            model.addAttribute("errorMessage", "Пользователь с таким именем уже существует.");
-            model.addAttribute("allRoles", userService.findAll());
-            model.addAttribute("admin", userService.getAllUsers());
 
-            return "admin";
-        }
-
-
+        userService.saveUser(user, roles);
+        return "redirect:/admin";
     }
+
 
     @GetMapping("/admin/edit")
     public String editUser(@RequestParam Long id, Model model) {
@@ -67,7 +64,8 @@ public class AdminController {
     }
 
     @PostMapping("/admin/update")
-    public String updateUser(@Valid @ModelAttribute("user") User user, @RequestParam List<Long> roles, BindingResult bindingResult, Model model) {
+    public String updateUser(@ModelAttribute("user") @Valid User user, @RequestParam List<Long> roles, BindingResult bindingResult, Model model) {
+        userValidator.validate(user,bindingResult);
         if (bindingResult.hasErrors()) {
             model.addAttribute("admin", userService.getAllUsers());
             model.addAttribute("allRoles", userService.findAll());
