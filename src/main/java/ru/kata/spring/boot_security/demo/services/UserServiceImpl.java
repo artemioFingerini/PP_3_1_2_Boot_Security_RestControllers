@@ -60,9 +60,14 @@ public class UserServiceImpl implements UserDetailsService {
         usersRepository.delete(user);
     }
 
-    @Transactional
-    public void updateUser(@Valid User user) {
+        @Transactional
+        public void updateUser(@Valid User user, List<Long> roleIds) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.getRoles().clear();
+        for (Long roleId : roleIds) {
+            Optional<Role> role = roleRepository.findById(roleId);
+            user.addRole(role.orElse(null));
+        }
         usersRepository.save(user);
     }
 
@@ -76,5 +81,7 @@ public class UserServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) {
         return usersRepository.findByUsername(username);
     }
+
+
 }
 

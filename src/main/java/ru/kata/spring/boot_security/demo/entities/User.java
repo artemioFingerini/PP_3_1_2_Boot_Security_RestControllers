@@ -6,8 +6,6 @@ package ru.kata.spring.boot_security.demo.entities;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import ru.kata.spring.boot_security.demo.validations.UniqueUsername;
-
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -44,9 +42,8 @@ public class User implements UserDetails {
     @Email(message = "Введите корректный адрес электронной почты")
     private String email;
 
-    @Column(name = "username", unique = true)
+    @Column(name = "username")
     @NotBlank(message = "Имя пользователя не должно быть пустым")
-    @UniqueUsername
     private String username;
 
     @Column(name = "password")

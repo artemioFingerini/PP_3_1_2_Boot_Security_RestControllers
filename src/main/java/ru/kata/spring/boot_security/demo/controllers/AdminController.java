@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.controllers;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -7,15 +8,18 @@ import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.entities.User;
 import ru.kata.spring.boot_security.demo.services.UserServiceImpl;
 
+
 import javax.validation.Valid;
 import java.util.List;
 
 @Controller
 public class AdminController {
+
     private UserServiceImpl userService;
 
     public AdminController(UserServiceImpl userService) {
         this.userService = userService;
+
     }
 
     @GetMapping("/index")
@@ -40,24 +44,36 @@ public class AdminController {
             model.addAttribute("admin", userService.getAllUsers());
             return "admin";
         }
-        userService.saveUser(user,roles);
-        return "redirect:/admin";
+        try {
+            userService.saveUser(user,roles);
+            return "redirect:/admin";
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute("errorMessage", "Пользователь с таким именем уже существует.");
+            model.addAttribute("allRoles", userService.findAll());
+            model.addAttribute("admin", userService.getAllUsers());
+
+            return "admin";
+        }
+
+
     }
 
     @GetMapping("/admin/edit")
     public String editUser(@RequestParam Long id, Model model) {
         User user = userService.getById(id);
         model.addAttribute("user", user);
+        model.addAttribute("allRoles", userService.findAll());
         return "editUser";
     }
 
     @PostMapping("/admin/update")
-    public String updateUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult, Model model) {
+    public String updateUser(@Valid @ModelAttribute("user") User user, @RequestParam List<Long> roles, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("admin", userService.getAllUsers());
+            model.addAttribute("allRoles", userService.findAll());
             return "editUser";
         }
-        userService.updateUser(user);
+        userService.updateUser(user,roles);
         return "redirect:/admin";
     }
 
@@ -66,5 +82,4 @@ public class AdminController {
         userService.deleteUserById(id);
         return "redirect:/admin";
     }
-
 }
