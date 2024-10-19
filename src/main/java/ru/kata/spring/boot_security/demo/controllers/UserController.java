@@ -15,7 +15,7 @@ import java.security.Principal;
 @Controller
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
     @Autowired
     public UserController(UserService userService) {
@@ -23,13 +23,14 @@ public class UserController {
     }
 
 
-    @GetMapping("/user")
+    @GetMapping("/userinfo")
     public String getUserPage(Model model, Principal principal) {
         if (principal == null) {
             return "redirect:/login";
         }
         User user = (User) userService.loadUserByUsername(principal.getName());
         model.addAttribute("user", user);
-        return "user";
+        model.addAttribute("allRoles", userService.findAll());
+        return "userinfo";
     }
 }
