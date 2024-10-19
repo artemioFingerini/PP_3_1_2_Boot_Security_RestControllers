@@ -1,7 +1,9 @@
 package ru.kata.spring.boot_security.demo.entities;
+
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -64,6 +66,7 @@ public class User implements UserDetails {
         this.email = email;
 
     }
+
     public User(String firstName, String lastName, String email, String username, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -76,6 +79,18 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles;
     }
+
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -95,6 +110,7 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
     public void addRole(Role role) {
         this.roles.add(role);
     }
