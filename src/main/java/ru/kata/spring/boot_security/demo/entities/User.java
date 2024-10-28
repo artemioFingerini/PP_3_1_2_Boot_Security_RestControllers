@@ -25,7 +25,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "firstname")
     @NotBlank(message = "Имя не должно быть пустым")
     @Pattern(regexp = "^[A-Za-zА-Яа-яЁё]+$", message = "Имя может содержать только буквы")
     private String firstName;
@@ -60,15 +60,15 @@ public class User implements UserDetails {
     private Set<Role> roles = new HashSet<>();
 
 
-    public User(String firstName, String lastName, String email) {
-        this.firstName = firstName;
+    public User(String firstname, String lastName, String email) {
+        this.firstName = firstname;
         this.lastName = lastName;
         this.email = email;
 
     }
 
-    public User(String firstName, String lastName, String email, String username, String password) {
-        this.firstName = firstName;
+    public User(String firstname, String lastName, String email, String username, String password) {
+        this.firstName = firstname;
         this.lastName = lastName;
         this.email = email;
         this.username = username;

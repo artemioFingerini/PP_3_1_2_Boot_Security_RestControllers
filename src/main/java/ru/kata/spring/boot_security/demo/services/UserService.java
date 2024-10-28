@@ -8,12 +8,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.entities.Role;
 import ru.kata.spring.boot_security.demo.entities.User;
+import ru.kata.spring.boot_security.demo.exception_handling.NoSuchUserException;
+import ru.kata.spring.boot_security.demo.exception_handling.UsernameAlreadyExistsException;
 import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 
 import javax.validation.Valid;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 
 @Service
@@ -39,18 +42,27 @@ public class UserService implements UserDetailsService {
 
     @Transactional(readOnly = true)
     public User getById(Long id) {
-        return usersRepository.getById(id);
+        return usersRepository.findById(id)
+                .orElseThrow(() -> new NoSuchUserException("User with ID " + id + " not found"));
     }
 
 
     @Transactional
-    public void saveUser(@Valid User user, List<Long> roleIds) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        for (Long roleId : roleIds) {
-            Optional<Role> role = roleRepository.findById(roleId);
-            user.addRole(role.orElse(null));
+    public User saveUser(@Valid User user) {
+        if (usersRepository.findByUsername(user.getUsername())!=null) {
+            throw new UsernameAlreadyExistsException("Имя пользователя " + user.getUsername() + " занято, выберите другое имя!");
         }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        Set<Role> roles = new HashSet<>();
+        for (Role role : user.getRoles()) {
+            Role existingRole = roleRepository.findById(role.getId())
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+            roles.add(existingRole);
+        }
+
+        user.setRoles(roles);
         usersRepository.save(user);
+        return user;
     }
 
 
@@ -59,17 +71,26 @@ public class UserService implements UserDetailsService {
         User user = usersRepository.getById(id);
         usersRepository.delete(user);
     }
-
-        @Transactional
-        public void updateUser(@Valid User user, List<Long> roleIds) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.getRoles().clear();
-        for (Long roleId : roleIds) {
-            Optional<Role> role = roleRepository.findById(roleId);
-            user.addRole(role.orElse(null));
+    @Transactional
+    public User updateUser(Long id, @Valid User updatedUser) {
+        User existingUser = usersRepository.findById(id)
+                .orElseThrow(() -> new NoSuchUserException("User with ID " + id + " not found"));
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
         }
-        usersRepository.save(user);
+        if (usersRepository.findByUsername(updatedUser.getUsername()) != null &&
+                !existingUser.getUsername().equals(updatedUser.getUsername())) {
+            throw new UsernameAlreadyExistsException("Имя пользователя " + updatedUser.getUsername() + " занято, выберите другое имя!");
+        }
+
+        existingUser.setFirstName(updatedUser.getFirstName());
+        existingUser.setLastName(updatedUser.getLastName());
+        existingUser.setEmail(updatedUser.getEmail());
+        existingUser.setUsername(updatedUser.getUsername());
+        existingUser.setRoles(updatedUser.getRoles());
+        return usersRepository.save(existingUser);
     }
+
 
     @Transactional(readOnly = true)
     public List<Role> findAll() {
@@ -82,6 +103,10 @@ public class UserService implements UserDetailsService {
         return usersRepository.findByUsername(username);
     }
 
+    @Transactional
+    public List<Role> findAllRoles() {
+        return roleRepository.findAll();
+    }
 
 }
 
